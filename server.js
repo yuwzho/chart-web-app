@@ -1,6 +1,5 @@
 const express = require('express');
 const http = require('http');
-const url = require('url');
 const WebSocket = require('ws');
 const moment = require('moment');
 const path = require('path');
