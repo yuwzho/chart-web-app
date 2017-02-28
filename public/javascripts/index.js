@@ -1,14 +1,13 @@
 $(document).ready(function(){
-  var timeData = [(new Date()).toISOString()],
-  temperatureData = [26],
-  HumidityData = [32];
+  var timeData = [],
+  temperatureData = [],
+  humidityData = [];
   var data = {
 	  labels : timeData,
 		datasets : [
 		  {
 				fill : false,
         label: 'Temperature',
-        labelString: 't',
         yAxisID: 'Temperature',
         borderColor: "rgba(255, 204, 0, 1)",
         pointBoarderColor: "rgba(255, 204, 0, 1)",
@@ -26,7 +25,7 @@ $(document).ready(function(){
         backgroundColor: "rgba(24, 120, 240, 0.4)",
         pointHoverBackgroundColor: "rgba(24, 120, 240, 1)",
         pointHoverBorderColor: "rgba(24, 120, 240, 1)",
-				data : HumidityData
+				data : humidityData
 			}
 		]
   }
@@ -65,4 +64,29 @@ $(document).ready(function(){
     data: data,
     options: basicOption
   });
+
+  var ws = new WebSocket('ws://' + location.host);
+  ws.onopen = function () {
+    ws.send('blabla');
+  }
+ ws.onmessage = function (message) {
+   console.log('receive message' + message.data);
+   try {
+     var obj = JSON.parse(message.data);
+     timeData.push(obj.time || (new Date()).toISOString());
+     temperatureData.push(obj.temperature || 0);
+     humidityData.push(obj.humidity || 0);
+
+     // only keep no more than 50 points in the line chart
+     var len = timeData.length;
+     if (len > 50) {
+       timeData.shift();
+       temperatureData.shift();
+       humidityData.shift();
+     }
+     myLineChart.update();
+   }catch(err) {
+     console.error(err);
+   }
+ }
 });

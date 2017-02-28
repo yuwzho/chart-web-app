@@ -19,6 +19,7 @@ wss.broadcast = function broadcast(data) {
   wss.clients.forEach(function each(client) {
     if (client.readyState === WebSocket.OPEN) {
       try {
+        console.log('sending data ' + data);
         client.send(data);
       }catch(e) {
         console.error(e);
@@ -27,16 +28,21 @@ wss.broadcast = function broadcast(data) {
   });
 };
 
-// wss.on('connection', function connection(ws) {
-//   const location = url.parse(ws.upgradeReq.url, true);
-//   // You might use location.query.access_token to authenticate or share sessions 
-//   // or ws.upgradeReq.headers.cookie (see http://stackoverflow.com/a/16395220/151312) 
-//   ws.on('message', function incoming(message) {
-//     console.log('received: %s', message);
-//   });
+wss.on('connection', function connection(ws) {
+  const location = url.parse(ws.upgradeReq.url, true);
+  // You might use location.query.access_token to authenticate or share sessions 
+  // or ws.upgradeReq.headers.cookie (see http://stackoverflow.com/a/16395220/151312) 
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message);
+    wss.broadcast(JSON.stringify({messageId: 1, temperature: 2, humidity: 3, time: (new Date()).toISOString}));
+  });
  
-//   ws.send(JSON.stringify({messageId: 1, temperature: 2, humidity: 3, time: (new Date()).toISOString}));
-// });
+
+});
+
+// setTimeout(function() {
+//   wss.broadcast(JSON.stringify({messageId: 1, temperature: 2, humidity: 3, time: (new Date()).toISOString}));
+// }, 10000);
 
 var port = normalizePort(process.env.PORT || '3000');
 server.listen(port, function listening() {
