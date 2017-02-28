@@ -2,15 +2,17 @@ const express = require('express');
 const http = require('http');
 const url = require('url');
 const WebSocket = require('ws');
+const moment = require('moment');
 const path = require('path');
- 
+const iotHubClient = require('./IoTHub/iot-hub.js');
+
 const app = express();
- 
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(function (req, res, next) {
-    res.redirect('/');
+  res.redirect('/');
 });
- 
+
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
@@ -21,28 +23,24 @@ wss.broadcast = function broadcast(data) {
       try {
         console.log('sending data ' + data);
         client.send(data);
-      }catch(e) {
+      } catch (e) {
         console.error(e);
       }
     }
   });
 };
 
-wss.on('connection', function connection(ws) {
-  const location = url.parse(ws.upgradeReq.url, true);
-  // You might use location.query.access_token to authenticate or share sessions 
-  // or ws.upgradeReq.headers.cookie (see http://stackoverflow.com/a/16395220/151312) 
-  ws.on('message', function incoming(message) {
-    console.log('received: %s', message);
-    wss.broadcast(JSON.stringify({messageId: 1, temperature: 2, humidity: 3, time: (new Date()).toISOString}));
-  });
- 
-
+var iotHubReader = new iotHubClient(process.env['Azure.IoT.IoTHub.ConnectionString'], process.env['Azure.IoT.IoTHub.ConsumerGroup']);
+iotHubReader.startReadMessage(function (obj, date) {
+  try {
+    console.log(date);
+    date = date || Date.now()
+    wss.broadcast(JSON.stringify(Object.assign(obj, { time: moment.utc(date).format('YYYY:MM:DD[T]hh:mm:ss') })));
+  } catch (err) {
+    console.log(obj);
+    console.error(err);
+  }
 });
-
-// setTimeout(function() {
-//   wss.broadcast(JSON.stringify({messageId: 1, temperature: 2, humidity: 3, time: (new Date()).toISOString}));
-// }, 10000);
 
 var port = normalizePort(process.env.PORT || '3000');
 server.listen(port, function listening() {
