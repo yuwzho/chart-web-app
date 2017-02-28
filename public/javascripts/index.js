@@ -74,6 +74,9 @@ $(document).ready(function () {
     console.log('receive message' + message.data);
     try {
       var obj = JSON.parse(message.data);
+      if(!obj.time || !obj.temperature || !obj.humidity) {
+        return;
+      }
       timeData.push(obj.time);
       temperatureData.push(obj.temperature);
       humidityData.push(obj.humidity);
